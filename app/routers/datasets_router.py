@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, UploadFile, File, Form
 
 from app.database.dependencies import get_db
 from app.schemas.dataset_schema import (
@@ -19,8 +20,18 @@ router = APIRouter(prefix="/datasets", tags=["datasets"])
 
 
 @router.post("/", response_model=DatasetResponse)
-def register_dataset(dataset: DatasetCreate, db: Session = Depends(get_db)):
-    return create_dataset(db, dataset)
+def register_dataset(
+    name: str = Form(...),
+    owner_id: int = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    return create_dataset(
+        db,
+        name,
+        owner_id,
+        file
+    )
 
 
 @router.get("/", response_model=list[DatasetResponse])

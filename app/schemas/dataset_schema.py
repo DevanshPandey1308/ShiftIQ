@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from datetime import datetime
 
 
 class DatasetCreate(BaseModel):
@@ -14,7 +15,13 @@ class DatasetUpdate(BaseModel):
 class DatasetResponse(BaseModel):
     id: int
     name: str
+    file_path: str
     owner_id: int
+
+    row_count: int | None
+    column_count: int | None
+
+    created_at: datetime
 
     model_config = {
         "from_attributes": True

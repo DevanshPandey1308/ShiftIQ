@@ -1,5 +1,8 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from app.utils.file_handler import save_uploaded_file
+from fastapi import UploadFile
+from app.utils.csv_processor import extract_csv_metadata
 
 from app.models.dataset import Dataset
 from app.models.user import User
@@ -9,8 +12,13 @@ from app.schemas.dataset_schema import (
 )
 
 
-def create_dataset(db: Session, dataset: DatasetCreate):
-    owner = db.query(User).filter(User.id == dataset.owner_id).first()
+def create_dataset(
+    db: Session,
+    name: str,
+    owner_id: int,
+    file: UploadFile
+):
+    owner = db.query(User).filter(User.id == owner_id).first()
 
     if not owner:
         raise HTTPException(
@@ -18,10 +26,16 @@ def create_dataset(db: Session, dataset: DatasetCreate):
             detail="Owner not found."
         )
 
+    metadata = extract_csv_metadata(file)
+    file_path = save_uploaded_file(file)
+
     new_dataset = Dataset(
-        name=dataset.name,
-        owner_id=dataset.owner_id
-    )
+    name=name,
+    owner_id=owner_id,
+    file_path=file_path,
+    row_count=metadata["row_count"],
+    column_count=metadata["column_count"]
+)
 
     db.add(new_dataset)
     db.commit()
