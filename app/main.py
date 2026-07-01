@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.routers.user_router import router as user_router
 from app.routers.datasets_router import router as dataset_router
+from app.routers.batch_router import router as batch_router
 
 app = FastAPI(
     title="ShiftIQ API",
@@ -10,6 +11,7 @@ app = FastAPI(
 
 app.include_router(user_router)
 app.include_router(dataset_router)
+app.include_router(batch_router)
 
 @app.get("/")
 def home():
