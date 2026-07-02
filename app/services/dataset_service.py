@@ -11,6 +11,14 @@ from app.schemas.dataset_schema import (
     DatasetUpdate
 )
 
+import pandas as pd
+
+from app.utils.profiler import (
+    generate_dataset_profile,
+    get_numeric_statistics,
+    get_categorical_statistics
+)
+
 
 def create_dataset(
     db: Session,
@@ -113,3 +121,27 @@ def delete_dataset(db: Session, dataset_id: int):
     return {
         "message": "Dataset deleted successfully."
     }
+
+def get_dataset_profile(
+    db: Session,
+    dataset_id: int
+):
+    dataset = db.query(Dataset).filter(
+        Dataset.id == dataset_id
+    ).first()
+
+    if not dataset:
+        raise HTTPException(
+            status_code=404,
+            detail="Dataset not found."
+        )
+
+    df = pd.read_csv(dataset.file_path)
+
+    profile = generate_dataset_profile(df)
+
+    profile["numeric_statistics"] = get_numeric_statistics(df)
+
+    profile["categorical_statistics"] = get_categorical_statistics(df)
+
+    return profile

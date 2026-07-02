@@ -14,6 +14,7 @@ from app.services.dataset_service import (
     get_dataset_by_id,
     update_dataset,
     delete_dataset,
+    get_dataset_profile
 )
 
 router = APIRouter(prefix="/datasets", tags=["datasets"])
@@ -42,6 +43,16 @@ def read_all_datasets(db: Session = Depends(get_db)):
 @router.get("/{dataset_id}", response_model=DatasetResponse)
 def read_dataset(dataset_id: int, db: Session = Depends(get_db)):
     return get_dataset_by_id(db, dataset_id)
+
+@router.get("/{dataset_id}/profile")
+def read_dataset_profile(
+    dataset_id: int,
+    db: Session = Depends(get_db)
+):
+    return get_dataset_profile(
+        db,
+        dataset_id
+    )
 
 
 @router.put("/{dataset_id}", response_model=DatasetResponse)
