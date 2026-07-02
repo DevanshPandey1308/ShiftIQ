@@ -19,6 +19,9 @@ from app.utils.profiler import (
     get_categorical_statistics
 )
 
+from app.models.batch import Batch
+from app.services.processing_service import process_dataset
+
 
 def create_dataset(
     db: Session,
@@ -48,6 +51,20 @@ def create_dataset(
     db.add(new_dataset)
     db.commit()
     db.refresh(new_dataset)
+
+    new_batch = Batch(
+        dataset_id=new_dataset.id,
+        status="Pending"
+    )
+
+    db.add(new_batch)
+    db.commit()
+    db.refresh(new_batch)
+
+    process_dataset(
+        db,
+        new_batch.id
+    )
 
     return new_dataset
 
