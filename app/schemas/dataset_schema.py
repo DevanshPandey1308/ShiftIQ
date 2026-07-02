@@ -1,24 +1,41 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
+
+from pydantic import BaseModel, Field
 
 
 class DatasetCreate(BaseModel):
-    name: str = Field(min_length=2, max_length=100)
+    name: str = Field(
+        min_length=2,
+        max_length=100
+    )
+
     owner_id: int
 
 
 class DatasetUpdate(BaseModel):
-    name: str = Field(min_length=2, max_length=100)
+    name: str = Field(
+        min_length=2,
+        max_length=100
+    )
+
     owner_id: int
 
 
 class DatasetResponse(BaseModel):
     id: int
+
     name: str
+
     file_path: str
+
     owner_id: int
 
+    model_id: int | None
+
+    dataset_type: str | None
+
     row_count: int | None
+
     column_count: int | None
 
     created_at: datetime

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.utils.file_handler import save_uploaded_file
 from fastapi import UploadFile
 from app.utils.csv_processor import extract_csv_metadata
+from app.models.ml_model import MLModel
 
 from app.models.dataset import Dataset
 from app.models.user import User
@@ -162,3 +163,69 @@ def get_dataset_profile(
     profile["categorical_statistics"] = get_categorical_statistics(df)
 
     return profile
+
+def register_baseline_dataset(
+    db: Session,
+    model_id: int,
+    name: str,
+    file: UploadFile
+):
+    """
+    Register a baseline dataset for an ML Model.
+    """
+
+    # Verify that the ML Model exists
+    model = db.query(MLModel).filter(
+        MLModel.id == model_id
+    ).first()
+
+    if not model:
+        raise HTTPException(
+            status_code=404,
+            detail="ML Model not found."
+        )
+    
+    existing_baseline = db.query(Dataset).filter(
+    Dataset.model_id == model_id,
+    Dataset.dataset_type == "BASELINE"
+    ).first()
+
+    if existing_baseline:
+        raise HTTPException(
+            status_code=400,
+            detail="Baseline dataset already exists for this ML Model."
+        )
+
+    metadata = extract_csv_metadata(file)
+
+    file_path = save_uploaded_file(file)
+
+    baseline_dataset = Dataset(
+        name=name,
+        owner_id=model.owner_id,
+        model_id=model.id,
+        dataset_type="BASELINE",
+        file_path=file_path,
+        row_count=metadata["row_count"],
+        column_count=metadata["column_count"]
+    )
+
+    db.add(baseline_dataset)
+    db.commit()
+    db.refresh(baseline_dataset)
+
+    new_batch = Batch(
+        dataset_id=baseline_dataset.id,
+        status="Pending"
+    )
+
+    db.add(new_batch)
+    db.commit()
+    db.refresh(new_batch)
+
+    process_dataset(
+        db,
+        new_batch.id
+    )
+
+    return baseline_dataset

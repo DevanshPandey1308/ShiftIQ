@@ -17,6 +17,16 @@ from app.services.ml_model_service import (
     delete_model
 )
 
+from fastapi import UploadFile, File, Form
+
+from app.services.dataset_service import (
+    register_baseline_dataset
+)
+
+from app.schemas.dataset_schema import (
+    DatasetResponse
+)
+
 router = APIRouter(
     prefix="/models",
     tags=["ML Models"]
@@ -67,4 +77,23 @@ def delete_existing_model(
     return delete_model(
         db,
         model_id
+    )
+
+@router.post(
+    "/{model_id}/baseline",
+    response_model=DatasetResponse,
+    status_code=201
+)
+
+def upload_baseline_dataset(
+    model_id: int,
+    name: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    return register_baseline_dataset(
+        db=db,
+        model_id=model_id,
+        name=name,
+        file=file
     )
