@@ -7,10 +7,7 @@ from app.models.ml_model import MLModel
 
 from app.models.dataset import Dataset
 from app.models.user import User
-from app.schemas.dataset_schema import (
-    DatasetCreate,
-    DatasetUpdate
-)
+from app.schemas.dataset_schema import DatasetUpdate
 
 import pandas as pd
 
@@ -22,6 +19,53 @@ from app.utils.profiler import (
 
 from app.models.batch import Batch
 from app.services.processing_service import process_dataset
+
+
+def _create_dataset_with_processing(
+    db: Session,
+    name: str,
+    owner_id: int,
+    file_path: str,
+    metadata: dict,
+    model_id: int | None = None,
+    dataset_type: str | None = None
+):
+    """
+    Internal helper to create a dataset,
+    create its processing batch,
+    and trigger processing.
+    """
+
+    dataset = Dataset(
+        name=name,
+        owner_id=owner_id,
+        model_id=model_id,
+        dataset_type=dataset_type,
+        file_path=file_path,
+        row_count=metadata["row_count"],
+        column_count=metadata["column_count"]
+    )
+
+    db.add(dataset)
+    db.commit()
+    db.refresh(dataset)
+
+    batch = Batch(
+        dataset_id=dataset.id,
+        status="Pending"
+    )
+
+    db.add(batch)
+    db.commit()
+    db.refresh(batch)
+
+    process_dataset(
+        db,
+        batch.id
+    )
+
+    return dataset
+
 
 
 def create_dataset(
@@ -39,35 +83,18 @@ def create_dataset(
         )
 
     metadata = extract_csv_metadata(file)
+
+    file.file.seek(0)
+
     file_path = save_uploaded_file(file)
 
-    new_dataset = Dataset(
-    name=name,
-    owner_id=owner_id,
-    file_path=file_path,
-    row_count=metadata["row_count"],
-    column_count=metadata["column_count"]
-)
-
-    db.add(new_dataset)
-    db.commit()
-    db.refresh(new_dataset)
-
-    new_batch = Batch(
-        dataset_id=new_dataset.id,
-        status="Pending"
+    return _create_dataset_with_processing(
+        db=db,
+        name=name,
+        owner_id=owner_id,
+        file_path=file_path,
+        metadata=metadata
     )
-
-    db.add(new_batch)
-    db.commit()
-    db.refresh(new_batch)
-
-    process_dataset(
-        db,
-        new_batch.id
-    )
-
-    return new_dataset
 
 
 def get_all_datasets(db: Session):
@@ -186,8 +213,8 @@ def register_baseline_dataset(
         )
     
     existing_baseline = db.query(Dataset).filter(
-    Dataset.model_id == model_id,
-    Dataset.dataset_type == "BASELINE"
+        Dataset.model_id == model_id,
+        Dataset.dataset_type == "BASELINE"
     ).first()
 
     if existing_baseline:
@@ -198,34 +225,69 @@ def register_baseline_dataset(
 
     metadata = extract_csv_metadata(file)
 
+    file.file.seek(0)
+
     file_path = save_uploaded_file(file)
 
-    baseline_dataset = Dataset(
+    return _create_dataset_with_processing(
+    db=db,
+    name=name,
+    owner_id=model.owner_id,
+    model_id=model.id,
+    dataset_type="BASELINE",
+    file_path=file_path,
+    metadata=metadata
+)
+
+def register_batch_dataset(
+    db: Session,
+    model_id: int,
+    name: str,
+    file: UploadFile
+):
+    """
+    Register a new production batch for an ML Model.
+    """
+
+    # Verify ML Model exists
+    model = db.query(MLModel).filter(
+        MLModel.id == model_id
+    ).first()
+
+    if not model:
+        raise HTTPException(
+            status_code=404,
+            detail="ML Model not found."
+        )
+
+    # Verify baseline dataset exists
+    baseline_dataset = db.query(Dataset).filter(
+        Dataset.model_id == model_id,
+        Dataset.dataset_type == "BASELINE"
+    ).first()
+
+    if not baseline_dataset:
+        raise HTTPException(
+            status_code=400,
+            detail="Baseline dataset not found for this ML Model."
+        )
+
+    # Extract metadata
+    metadata = extract_csv_metadata(file)
+
+    # Reset file pointer
+    file.file.seek(0)
+
+    # Save uploaded CSV
+    file_path = save_uploaded_file(file)
+
+    # Create batch dataset and trigger processing
+    return _create_dataset_with_processing(
+        db=db,
         name=name,
         owner_id=model.owner_id,
         model_id=model.id,
-        dataset_type="BASELINE",
+        dataset_type="BATCH",
         file_path=file_path,
-        row_count=metadata["row_count"],
-        column_count=metadata["column_count"]
+        metadata=metadata
     )
-
-    db.add(baseline_dataset)
-    db.commit()
-    db.refresh(baseline_dataset)
-
-    new_batch = Batch(
-        dataset_id=baseline_dataset.id,
-        status="Pending"
-    )
-
-    db.add(new_batch)
-    db.commit()
-    db.refresh(new_batch)
-
-    process_dataset(
-        db,
-        new_batch.id
-    )
-
-    return baseline_dataset

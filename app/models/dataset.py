@@ -78,3 +78,9 @@ class Dataset(Base):
         "MLModel",
         back_populates="datasets"
     )
+
+    batches = relationship(
+        "Batch",
+        back_populates="dataset",
+        cascade="all, delete-orphan"
+    )

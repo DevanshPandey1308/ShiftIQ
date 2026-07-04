@@ -20,7 +20,8 @@ from app.services.ml_model_service import (
 from fastapi import UploadFile, File, Form
 
 from app.services.dataset_service import (
-    register_baseline_dataset
+    register_baseline_dataset,
+    register_batch_dataset
 )
 
 from app.schemas.dataset_schema import (
@@ -92,6 +93,24 @@ def upload_baseline_dataset(
     db: Session = Depends(get_db)
 ):
     return register_baseline_dataset(
+        db=db,
+        model_id=model_id,
+        name=name,
+        file=file
+    )
+
+@router.post(
+    "/{model_id}/batch",
+    response_model=DatasetResponse,
+    status_code=201
+)
+def upload_batch_dataset(
+    model_id: int,
+    name: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    return register_batch_dataset(
         db=db,
         model_id=model_id,
         name=name,
