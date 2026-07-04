@@ -10,6 +10,11 @@ from app.utils.profiler import (
     get_categorical_statistics
 )
 
+from app.utils.drift_engine import (
+    prepare_dataset_comparison
+)
+
+
 def process_dataset(
     db: Session,
     batch_id: int
@@ -39,6 +44,25 @@ def process_dataset(
         profile["numeric_statistics"] = get_numeric_statistics(df)
 
         profile["categorical_statistics"] = get_categorical_statistics(df)
+
+        if dataset.dataset_type == "BATCH":
+
+            baseline_dataset = db.query(Dataset).filter(
+                Dataset.model_id == dataset.model_id,
+                Dataset.dataset_type == "BASELINE"
+            ).first()
+
+            if baseline_dataset:
+
+                comparison = prepare_dataset_comparison(
+                    baseline_dataset.file_path,
+                    dataset.file_path
+                )
+
+                profile["comparison"] = {
+                    "numeric_columns": comparison["numeric_columns"],
+                    "categorical_columns": comparison["categorical_columns"]
+                }
 
         batch.status = "Completed"
         db.commit()
