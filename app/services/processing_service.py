@@ -15,7 +15,9 @@ from app.utils.drift_engine import (
     prepare_dataset_comparison
 )
 
-
+from app.services.drift_report_service import (
+    create_drift_report
+)
 
 
 def process_dataset(
@@ -76,11 +78,20 @@ def process_dataset(
                     "health_score": comparison["health_score"]
                 }
 
+                create_drift_report(
+                    db=db,
+                    batch_id=batch.id,
+                    psi_results=comparison["psi_results"],
+                    ks_results=comparison["ks_results"],
+                    chi_square_results=comparison["chi_square_results"],
+                    js_results=comparison["js_results"],
+                    health_score=comparison["health_score"]
+                )
+
+                batch.health_score = comparison["health_score"]
+
         batch.status = "Completed"
         batch.processing_completed_at = datetime.utcnow()
-
-        if dataset.dataset_type == "BATCH":
-            batch.health_score = comparison["health_score"]
 
         db.commit()
 

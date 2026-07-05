@@ -11,6 +11,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from app.database.database import Base
+from sqlalchemy.orm import relationship
 
 
 class Batch(Base):
@@ -56,4 +57,10 @@ class Batch(Base):
     dataset = relationship(
         "Dataset",
         back_populates="batches"
+    )
+
+    drift_report = relationship(
+        "DriftReport",
+        back_populates="batch",
+        uselist=False
     )
