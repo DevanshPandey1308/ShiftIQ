@@ -1,5 +1,6 @@
 import pandas as pd
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from app.models.batch import Batch
 from app.models.dataset import Dataset
@@ -13,6 +14,8 @@ from app.utils.profiler import (
 from app.utils.drift_engine import (
     prepare_dataset_comparison
 )
+
+
 
 
 def process_dataset(
@@ -35,6 +38,8 @@ def process_dataset(
 
     try:
         batch.status = "Processing"
+        batch.processing_started_at = datetime.utcnow()
+
         db.commit()
 
         df = pd.read_csv(dataset.file_path)
@@ -59,12 +64,24 @@ def process_dataset(
                     dataset.file_path
                 )
 
-                profile["comparison"] = {
-                    "numeric_columns": comparison["numeric_columns"],
-                    "categorical_columns": comparison["categorical_columns"]
+                profile["drift_analysis"] = {
+                    "comparison": {
+                        "numeric_columns": comparison["numeric_columns"],
+                        "categorical_columns": comparison["categorical_columns"]
+                    },
+                    "psi_results": comparison["psi_results"],
+                    "ks_results": comparison["ks_results"],
+                    "chi_square_results": comparison["chi_square_results"],
+                    "js_results": comparison["js_results"],
+                    "health_score": comparison["health_score"]
                 }
 
         batch.status = "Completed"
+        batch.processing_completed_at = datetime.utcnow()
+
+        if dataset.dataset_type == "BATCH":
+            batch.health_score = comparison["health_score"]
+
         db.commit()
 
         return profile
