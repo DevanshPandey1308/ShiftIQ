@@ -8,6 +8,7 @@ from app.utils.drift_metrics import (
     calculate_health_score
 )
 
+
 def load_dataset(file_path: str) -> pd.DataFrame:
     return pd.read_csv(file_path)
 
@@ -22,9 +23,26 @@ def validate_schema(
 def get_numeric_columns(
     dataframe: pd.DataFrame
 ) -> list[str]:
-    return dataframe.select_dtypes(
+
+    numeric_columns = dataframe.select_dtypes(
         include=["number"]
     ).columns.tolist()
+
+    ignored_columns = {
+        "id",
+        "ID",
+        "customerid",
+        "customer_id",
+        "CustomerID"
+    }
+
+    numeric_columns = [
+        column
+        for column in numeric_columns
+        if column not in ignored_columns
+    ]
+
+    return numeric_columns
 
 
 def get_categorical_columns(
@@ -33,6 +51,7 @@ def get_categorical_columns(
     return dataframe.select_dtypes(
         exclude=["number"]
     ).columns.tolist()
+
 
 def prepare_dataset_comparison(
     baseline_path: str,

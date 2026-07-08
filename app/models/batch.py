@@ -64,3 +64,8 @@ class Batch(Base):
         back_populates="batch",
         uselist=False
     )
+
+    alerts = relationship(
+        "Alert",
+        back_populates="batch"
+    )

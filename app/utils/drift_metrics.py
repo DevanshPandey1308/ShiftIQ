@@ -63,6 +63,8 @@ def calculate_psi(
             )
         )
 
+        psi = float(psi)
+
         if psi < 0.1:
             status = "No Drift"
         elif psi < 0.25:
@@ -71,11 +73,12 @@ def calculate_psi(
             status = "Significant Drift"
 
         psi_results[column] = {
-            "psi": round(float(psi), 4),
+            "psi": round(psi, 4),
             "status": status
         }
 
     return psi_results
+
 
 def calculate_ks_test(
     baseline_df: pd.DataFrame,
@@ -94,10 +97,11 @@ def calculate_ks_test(
         ks_results[column] = {
             "ks_statistic": round(float(statistic), 4),
             "p_value": round(float(p_value), 4),
-            "drift_detected": p_value < 0.05
+            "drift_detected": bool(p_value < 0.05)
         }
 
     return ks_results
+
 
 def calculate_chi_square(
     baseline_df: pd.DataFrame,
@@ -138,10 +142,11 @@ def calculate_chi_square(
         chi_results[column] = {
             "chi_square": round(float(chi2), 4),
             "p_value": round(float(p_value), 4),
-            "drift_detected": p_value < 0.05
+            "drift_detected": bool(p_value < 0.05)
         }
 
     return chi_results
+
 
 def calculate_js_divergence(
     baseline_df: pd.DataFrame,
@@ -191,6 +196,7 @@ def calculate_js_divergence(
 
     return js_results
 
+
 def calculate_health_score(
     psi_results: dict,
     ks_results: dict,
@@ -222,4 +228,4 @@ def calculate_health_score(
         if result["js_divergence"] > 0.2:
             total_score -= 5
 
-    return max(total_score, 0)
+    return int(max(total_score, 0))

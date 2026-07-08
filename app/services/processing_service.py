@@ -19,6 +19,10 @@ from app.services.drift_report_service import (
     create_drift_report
 )
 
+from app.services.alert_service import (
+    create_alert
+)
+
 
 def process_dataset(
     db: Session,
@@ -88,7 +92,33 @@ def process_dataset(
                     health_score=comparison["health_score"]
                 )
 
-                batch.health_score = comparison["health_score"]
+                health_score = comparison["health_score"]
+
+                batch.health_score = health_score
+
+                if health_score < 40:
+                    create_alert(
+                        db=db,
+                        batch_id=batch.id,
+                        severity="HIGH",
+                        message="Severe data drift detected."
+                    )
+
+                elif health_score < 70:
+                    create_alert(
+                        db=db,
+                        batch_id=batch.id,
+                        severity="MEDIUM",
+                        message="Moderate data drift detected."
+                    )
+
+                elif health_score < 90:
+                    create_alert(
+                        db=db,
+                        batch_id=batch.id,
+                        severity="LOW",
+                        message="Minor data drift detected."
+                    )
 
         batch.status = "Completed"
         batch.processing_completed_at = datetime.utcnow()
