@@ -69,3 +69,8 @@ class Batch(Base):
         "Alert",
         back_populates="batch"
     )
+
+    ai_insights = relationship(
+        "AIInsight",
+        back_populates="batch"
+    )

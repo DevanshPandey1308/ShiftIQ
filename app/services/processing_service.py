@@ -15,12 +15,20 @@ from app.utils.drift_engine import (
     prepare_dataset_comparison
 )
 
+from app.utils.ai_recommendation_engine import (
+    generate_ai_insight
+)
+
 from app.services.drift_report_service import (
     create_drift_report
 )
 
 from app.services.alert_service import (
     create_alert
+)
+
+from app.services.ai_insight_service import (
+    create_ai_insight
 )
 
 
@@ -120,6 +128,17 @@ def process_dataset(
                         message="Minor data drift detected."
                     )
 
+                ai_result = generate_ai_insight(
+                    health_score
+                )
+
+                create_ai_insight(
+                    db=db,
+                    batch_id=batch.id,
+                    insight=ai_result["insight"],
+                    recommendation=ai_result["recommendation"]
+                )
+
         batch.status = "Completed"
         batch.processing_completed_at = datetime.utcnow()
 
@@ -128,6 +147,10 @@ def process_dataset(
         return profile
 
     except Exception:
+        db.rollback()
+
         batch.status = "Failed"
+
         db.commit()
+
         raise

@@ -4,3 +4,4 @@ from .batch import Batch
 from .ml_model import MLModel
 from .drift_report import DriftReport
 from .alert import Alert
+from .ai_insight import AIInsight
