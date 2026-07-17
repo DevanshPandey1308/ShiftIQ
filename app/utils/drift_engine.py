@@ -118,7 +118,8 @@ def prepare_dataset_comparison(
         psi_results,
         ks_results,
         chi_square_results,
-        js_results
+        js_results,
+        missing_value_drift
     )
 
     return {

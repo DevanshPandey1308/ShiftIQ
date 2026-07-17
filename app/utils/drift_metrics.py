@@ -201,7 +201,8 @@ def calculate_health_score(
     psi_results: dict,
     ks_results: dict,
     chi_square_results: dict,
-    js_results: dict
+    js_results: dict,
+    missing_value_drift: dict
 ):
     total_score = 100
 
@@ -227,5 +228,16 @@ def calculate_health_score(
 
         if result["js_divergence"] > 0.2:
             total_score -= 5
+
+    for result in missing_value_drift.values():
+
+        if result["status"] == "Minor":
+            total_score -= 2
+
+        elif result["status"] == "Moderate":
+            total_score -= 5
+
+        elif result["status"] == "Critical":
+            total_score -= 10
 
     return int(max(total_score, 0))

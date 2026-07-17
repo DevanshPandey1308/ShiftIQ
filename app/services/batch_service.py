@@ -8,6 +8,10 @@ from app.schemas.batch_schema import (
     BatchUpdate
 )
 
+
+from app.services.processing_service import process_dataset
+from app.database.database import SessionLocal
+
 def create_batch(
     db: Session,
     batch: BatchCreate
@@ -29,6 +33,19 @@ def create_batch(
 
     db.add(new_batch)
     db.commit()
+    db.refresh(new_batch)
+
+    # Create a fresh database session for processing
+    processing_db = SessionLocal()
+
+    try:
+        process_dataset(
+            db=processing_db,
+            batch_id=new_batch.id
+        )
+    finally:
+        processing_db.close()
+
     db.refresh(new_batch)
 
     return new_batch
