@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.models.drift_report import DriftReport
-
+from app.utils.feature_ranking import rank_features
 
 def create_drift_report(
     db: Session,
@@ -10,6 +10,7 @@ def create_drift_report(
     ks_results: dict,
     chi_square_results: dict,
     js_results: dict,
+    missing_value_drift: dict,
     health_score: float
 ):
     report = DriftReport(
@@ -18,6 +19,7 @@ def create_drift_report(
         ks_results=ks_results,
         chi_square_results=chi_square_results,
         js_results=js_results,
+        missing_value_drift=missing_value_drift,
         health_score=health_score
     )
 
@@ -65,3 +67,23 @@ def get_drift_report_by_batch(
         )
 
     return report
+
+def get_feature_ranking_by_batch(
+    db: Session,
+    batch_id: int
+):
+    report = db.query(DriftReport).filter(
+        DriftReport.batch_id == batch_id
+    ).first()
+
+    if not report:
+        raise HTTPException(
+            status_code=404,
+            detail="Drift Report not found."
+        )
+
+    return rank_features(
+        psi_results=report.psi_results,
+        ks_results=report.ks_results,
+        js_results=report.js_results
+    )

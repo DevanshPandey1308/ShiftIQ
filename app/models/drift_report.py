@@ -50,6 +50,11 @@ class DriftReport(Base):
         nullable=True
     )
 
+    missing_value_drift = Column(
+        JSON,
+        nullable=True
+    )
+
     health_score = Column(
         Float,
         nullable=False

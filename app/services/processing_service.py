@@ -87,6 +87,7 @@ def process_dataset(
                     "ks_results": comparison["ks_results"],
                     "chi_square_results": comparison["chi_square_results"],
                     "js_results": comparison["js_results"],
+                    "missing_value_drift": comparison["missing_value_drift"],
                     "health_score": comparison["health_score"]
                 }
 
@@ -97,6 +98,7 @@ def process_dataset(
                     ks_results=comparison["ks_results"],
                     chi_square_results=comparison["chi_square_results"],
                     js_results=comparison["js_results"],
+                    missing_value_drift=comparison["missing_value_drift"],
                     health_score=comparison["health_score"]
                 )
 

@@ -16,7 +16,8 @@ from app.schemas.dashboard_schema import (
     DashboardBatchResponse,
     HealthTrendResponse,
     AlertAnalyticsResponse,
-    ModelAnalyticsResponse
+    ModelAnalyticsResponse,
+    RecentActivityResponse
 )
 
 from app.services.dashboard_service import (
@@ -24,7 +25,8 @@ from app.services.dashboard_service import (
     get_recent_batches,
     get_health_trend,
     get_alert_analytics,
-    get_model_analytics
+    get_model_analytics,
+    get_recent_activity
 )
 
 router = APIRouter(
@@ -85,3 +87,16 @@ def read_model_analytics(
     db: Session = Depends(get_db)
 ):
     return get_model_analytics(db)
+
+@router.get(
+    "/recent-activity",
+    response_model=list[RecentActivityResponse]
+)
+def read_recent_activity(
+    limit: int = 10,
+    db: Session = Depends(get_db)
+):
+    return get_recent_activity(
+        db,
+        limit
+    )

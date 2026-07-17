@@ -78,3 +78,10 @@ class ModelAnalyticsResponse(BaseModel):
     average_health_score: float | None
 
     latest_batch_status: str | None
+
+class RecentActivityResponse(BaseModel):
+    activity_type: str
+
+    title: str
+
+    timestamp: datetime

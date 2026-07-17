@@ -16,6 +16,8 @@ class DriftReportResponse(BaseModel):
 
     js_results: dict
 
+    missing_value_drift: dict | None = None
+
     health_score: float
 
     created_at: datetime
@@ -23,3 +25,15 @@ class DriftReportResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+
+class FeatureRankingResponse(BaseModel):
+    feature: str
+
+    psi: float
+
+    ks_drift: bool
+
+    js_divergence: float
+
+    severity: str

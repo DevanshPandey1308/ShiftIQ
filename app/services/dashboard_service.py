@@ -6,6 +6,9 @@ from app.models.dataset import Dataset
 from app.models.batch import Batch
 from app.models.alert import Alert
 
+from app.models.alert import Alert
+from app.models.ai_insight import AIInsight
+
 
 def get_dashboard_summary(
     db: Session
@@ -198,3 +201,70 @@ def get_model_analytics(
         })
 
     return result
+
+def get_recent_activity(
+    db: Session,
+    limit: int = 10
+):
+    activities = []
+
+    # Recent batches
+    batches = (
+        db.query(Batch)
+        .filter(
+            Batch.processing_completed_at.is_not(None)
+        )
+        .order_by(
+            Batch.processing_completed_at.desc()
+        )
+        .limit(limit)
+        .all()
+    )
+
+    for batch in batches:
+        activities.append({
+            "activity_type": "Batch",
+            "title": f"Batch #{batch.id} completed ({batch.status})",
+            "timestamp": batch.processing_completed_at
+        })
+
+    # Recent alerts
+    alerts = (
+        db.query(Alert)
+        .order_by(
+            Alert.created_at.desc()
+        )
+        .limit(limit)
+        .all()
+    )
+
+    for alert in alerts:
+        activities.append({
+            "activity_type": "Alert",
+            "title": f"{alert.severity} alert generated",
+            "timestamp": alert.created_at
+        })
+
+    # Recent AI insights
+    insights = (
+        db.query(AIInsight)
+        .order_by(
+            AIInsight.created_at.desc()
+        )
+        .limit(limit)
+        .all()
+    )
+
+    for insight in insights:
+        activities.append({
+            "activity_type": "AI Insight",
+            "title": insight.insight,
+            "timestamp": insight.created_at
+        })
+
+    activities.sort(
+        key=lambda x: x["timestamp"],
+        reverse=True
+    )
+
+    return activities[:limit]

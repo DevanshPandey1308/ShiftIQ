@@ -4,13 +4,15 @@ from sqlalchemy.orm import Session
 from app.database.dependencies import get_db
 
 from app.schemas.drift_report_schema import (
-    DriftReportResponse
+    DriftReportResponse,
+    FeatureRankingResponse
 )
 
 from app.services.drift_report_service import (
     get_all_drift_reports,
     get_drift_report_by_id,
-    get_drift_report_by_batch
+    get_drift_report_by_batch,
+    get_feature_ranking_by_batch
 )
 
 router = APIRouter(
@@ -52,6 +54,19 @@ def read_batch_drift_report(
     db: Session = Depends(get_db)
 ):
     return get_drift_report_by_batch(
+        db,
+        batch_id
+    )
+
+@router.get(
+    "/batch/{batch_id}/features",
+    response_model=list[FeatureRankingResponse]
+)
+def read_feature_ranking(
+    batch_id: int,
+    db: Session = Depends(get_db)
+):
+    return get_feature_ranking_by_batch(
         db,
         batch_id
     )

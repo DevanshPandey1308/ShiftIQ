@@ -8,6 +8,10 @@ from app.utils.drift_metrics import (
     calculate_health_score
 )
 
+from app.utils.missing_value_drift import (
+    calculate_missing_value_drift
+)
+
 
 def load_dataset(file_path: str) -> pd.DataFrame:
     return pd.read_csv(file_path)
@@ -105,6 +109,11 @@ def prepare_dataset_comparison(
         numeric_columns
     )
 
+    missing_value_drift = calculate_missing_value_drift(
+        baseline_df,
+        batch_df
+    )
+
     health_score = calculate_health_score(
         psi_results,
         ks_results,
@@ -121,5 +130,6 @@ def prepare_dataset_comparison(
         "ks_results": ks_results,
         "chi_square_results": chi_square_results,
         "js_results": js_results,
+        "missing_value_drift": missing_value_drift,
         "health_score": health_score
     }
