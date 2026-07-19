@@ -37,3 +37,20 @@ class FeatureRankingResponse(BaseModel):
     js_divergence: float
 
     severity: str
+
+
+class BatchComparisonResponse(BaseModel):
+    batch_a_id: int
+    batch_b_id: int
+
+    health_score_a: float
+    health_score_b: float
+    health_score_change: float
+
+    health_trend: str
+
+    psi_comparison: dict
+    ks_comparison: dict
+    chi_square_comparison: dict
+    js_comparison: dict
+    missing_value_comparison: dict

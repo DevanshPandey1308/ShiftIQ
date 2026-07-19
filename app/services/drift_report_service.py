@@ -87,3 +87,69 @@ def get_feature_ranking_by_batch(
         ks_results=report.ks_results,
         js_results=report.js_results
     )
+
+def compare_drift_reports(
+    db: Session,
+    batch_a: int,
+    batch_b: int
+):
+    report_a = db.query(DriftReport).filter(
+        DriftReport.batch_id == batch_a
+    ).first()
+
+    report_b = db.query(DriftReport).filter(
+        DriftReport.batch_id == batch_b
+    ).first()
+
+    if not report_a or not report_b:
+        raise HTTPException(
+            status_code=404,
+            detail="One or both drift reports not found."
+        )
+
+    health_difference = round(
+        report_b.health_score - report_a.health_score,
+        2
+    )
+
+    if health_difference > 0:
+        trend = "Improved"
+    elif health_difference < 0:
+        trend = "Degraded"
+    else:
+        trend = "No Change"
+
+    return {
+        "batch_a_id": batch_a,
+        "batch_b_id": batch_b,
+
+        "health_score_a": report_a.health_score,
+        "health_score_b": report_b.health_score,
+        "health_score_change": health_difference,
+        "health_trend": trend,
+
+        "psi_comparison": {
+            "batch_a": report_a.psi_results,
+            "batch_b": report_b.psi_results
+        },
+
+        "ks_comparison": {
+            "batch_a": report_a.ks_results,
+            "batch_b": report_b.ks_results
+        },
+
+        "chi_square_comparison": {
+            "batch_a": report_a.chi_square_results,
+            "batch_b": report_b.chi_square_results
+        },
+
+        "js_comparison": {
+            "batch_a": report_a.js_results,
+            "batch_b": report_b.js_results
+        },
+
+        "missing_value_comparison": {
+            "batch_a": report_a.missing_value_drift,
+            "batch_b": report_b.missing_value_drift
+        }
+    }

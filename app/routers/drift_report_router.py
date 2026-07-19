@@ -5,14 +5,16 @@ from app.database.dependencies import get_db
 
 from app.schemas.drift_report_schema import (
     DriftReportResponse,
-    FeatureRankingResponse
+    FeatureRankingResponse,
+    BatchComparisonResponse
 )
 
 from app.services.drift_report_service import (
     get_all_drift_reports,
     get_drift_report_by_id,
     get_drift_report_by_batch,
-    get_feature_ranking_by_batch
+    get_feature_ranking_by_batch,
+    compare_drift_reports
 )
 
 router = APIRouter(
@@ -31,19 +33,21 @@ def read_all_drift_reports(
     return get_all_drift_reports(db)
 
 
+
 @router.get(
-    "/{report_id}",
-    response_model=DriftReportResponse
+    "/compare",
+    response_model=BatchComparisonResponse
 )
-def read_drift_report(
-    report_id: int,
+def compare_reports(
+    batch_a: int,
+    batch_b: int,
     db: Session = Depends(get_db)
 ):
-    return get_drift_report_by_id(
+    return compare_drift_reports(
         db,
-        report_id
+        batch_a,
+        batch_b
     )
-
 
 @router.get(
     "/batch/{batch_id}",
@@ -58,6 +62,7 @@ def read_batch_drift_report(
         batch_id
     )
 
+
 @router.get(
     "/batch/{batch_id}/features",
     response_model=list[FeatureRankingResponse]
@@ -69,4 +74,19 @@ def read_feature_ranking(
     return get_feature_ranking_by_batch(
         db,
         batch_id
+    )
+
+
+
+@router.get(
+    "/{report_id}",
+    response_model=DriftReportResponse
+)
+def read_drift_report(
+    report_id: int,
+    db: Session = Depends(get_db)
+):
+    return get_drift_report_by_id(
+        db,
+        report_id
     )
