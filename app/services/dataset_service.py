@@ -19,6 +19,7 @@ from app.utils.profiler import (
 
 from app.models.batch import Batch
 from app.services.processing_service import process_dataset
+from app.tasks.dataset_tasks import process_dataset_task
 
 
 def _create_dataset_with_processing(
@@ -28,7 +29,8 @@ def _create_dataset_with_processing(
     file_path: str,
     metadata: dict,
     model_id: int | None = None,
-    dataset_type: str | None = None
+    dataset_type: str | None = None,
+    background_process: bool = False
 ):
     """
     Internal helper to create a dataset,
@@ -59,10 +61,13 @@ def _create_dataset_with_processing(
     db.commit()
     db.refresh(batch)
 
-    process_dataset(
-        db,
-        batch.id
-    )
+    if background_process:
+        process_dataset_task.delay(batch.id)
+    else:
+        process_dataset(
+            db=db,
+            batch_id=batch.id
+        )
 
     return dataset
 
@@ -289,5 +294,6 @@ def register_batch_dataset(
         model_id=model.id,
         dataset_type="BATCH",
         file_path=file_path,
-        metadata=metadata
+        metadata=metadata,
+        background_process=True
     )
