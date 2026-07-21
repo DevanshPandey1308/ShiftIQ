@@ -31,6 +31,8 @@ from app.services.ai_insight_service import (
     create_ai_insight
 )
 
+from app.services.webhook_sender import send_webhook_notifications
+
 
 def process_dataset(
     db: Session,
@@ -140,6 +142,34 @@ def process_dataset(
                     insight=ai_result["insight"],
                     recommendation=ai_result["recommendation"]
                 )
+
+                payload = {
+                    "batch_id": batch.id,
+                    "dataset_id": dataset.id,
+                    "health_score": health_score,
+                    "status": batch.status,
+                    "severity": (
+                        "HIGH" if health_score < 40
+                        else "MEDIUM" if health_score < 70
+                        else "LOW" if health_score < 90
+                        else "NONE"
+                    ),
+                    "message": (
+                        "Severe data drift detected." if health_score < 40
+                        else "Moderate data drift detected." if health_score < 70
+                        else "Minor data drift detected." if health_score < 90
+                        else "No significant drift detected."
+                    ),
+                    "ai_insight": ai_result["insight"],
+                    "recommendation": ai_result["recommendation"],
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+
+                send_webhook_notifications(
+                    db=db,
+                    payload=payload
+                )
+
 
         batch.status = "Completed"
         batch.processing_completed_at = datetime.utcnow()
